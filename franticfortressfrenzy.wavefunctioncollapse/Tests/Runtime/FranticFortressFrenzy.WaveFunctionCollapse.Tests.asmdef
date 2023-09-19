@@ -1,0 +1,9 @@
+{
+    "name": "FranticFortressFrenzy.WaveFunctionCollapse.Tests",
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": []
+}
+
