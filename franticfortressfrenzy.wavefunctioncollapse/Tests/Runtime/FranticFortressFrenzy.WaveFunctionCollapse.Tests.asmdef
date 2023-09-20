@@ -4,6 +4,7 @@
         "TestAssemblies"
     ],
     "includePlatforms": [],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "references":[ "FranticFortressFrenzy.WaveFunctionCollapse" ]
 }
 
