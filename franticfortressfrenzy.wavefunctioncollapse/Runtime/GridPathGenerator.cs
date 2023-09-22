@@ -140,6 +140,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 return Enumerable.Empty<NodeWithParent<TC>>();
             }
 
+            // This makes choosing 1 neighbor twice as likely than choosing 2 neighbors, same for 2 and 3
             var amount = neighs.Count - (int)Math.Log(rng.Next(1, 1<<neighs.Count), 2);
             var neighArray = neighs.ToArray();
 
