@@ -26,7 +26,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         private Tree<TC, NodeData> _tree;
         public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
-        private Random rng = new Random(135135);
+        private Random rng = new Random();
 
         public int MaxRetries { get; private set; }
         public int TargetLookAhead { get; private set; }
