@@ -43,11 +43,21 @@ public class Generator : MonoBehaviour
         {
             EnableNode(enabled.Position);
         }
+
+        foreach (var node in _objects.Values)
+        {
+            node.GetComponent<Node>()?.SetExpandable(false);
+        }
+
+        foreach (var node in generator.GetExpandablePositions().Select(p => _objects[p]))
+        {
+            node.GetComponent<Node>()?.SetExpandable(true);
+        }
     }
 
     private void EnableNode(Vector2Int pos)
     {
-        // throw new NotImplementedException();
+        _objects[pos].GetComponent<Node>()?.EnableNode();
     }
 
     private void RemoveNode(Vector2Int pos)
