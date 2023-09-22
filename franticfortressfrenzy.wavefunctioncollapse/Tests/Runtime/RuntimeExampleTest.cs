@@ -14,12 +14,12 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         {
             var a = new GridPathGenerator<Vector2Int>(1, 1, new Vector2IntNeighborGetter(), Vector2Int.zero);
             a.Initialize();
-            a.Expand(Vector2Int.zero);
+            a.EnableNode(Vector2Int.zero);
 
             var expandAnyLeaf = new Action(() =>
             {
                 var leaves = a.Root.Leaves().ToArray();
-                a.Expand(leaves[Random.Range(0, leaves.Length)].Position);
+                a.EnableNode(leaves[Random.Range(0, leaves.Length)].Position);
             });
 
             for (int i = 0; i < 10; i++)

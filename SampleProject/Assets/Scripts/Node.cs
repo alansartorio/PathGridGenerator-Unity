@@ -50,7 +50,7 @@ public class Node : MonoBehaviour
         UpdateColor();
     }
 
-    public void SetExpandable(bool expandable)
+    public void SetEnableable(bool expandable)
     {
         _expandable = expandable;
         UpdateColor();

@@ -18,15 +18,20 @@ public class Generator : MonoBehaviour
 
     private void Start()
     {
-        var root = generator.Initialize();
-        AddNode(root.Position, null);
+        var delta = generator.Initialize();
+        ApplyDelta(delta);
     }
 
-    public void Expand(Vector2Int pos)
+    public void EnableNodeExpand(Vector2Int pos)
     {
-        if (!generator.GetExpandablePositions().Contains(pos))
+        if (!generator.GetEnableablePositions().Contains(pos))
             return;
-        var delta = generator.Expand(pos);
+        var delta = generator.EnableNode(pos);
+        ApplyDelta(delta);
+    }
+
+    private void ApplyDelta(NodesDelta<Vector2Int> delta)
+    {
         foreach (var node in delta.removedNodes)
         {
             RemoveNode(node.Position);
@@ -44,12 +49,12 @@ public class Generator : MonoBehaviour
 
         foreach (var node in _objects.Values)
         {
-            node.GetComponent<Node>()?.SetExpandable(false);
+            node.GetComponent<Node>()?.SetEnableable(false);
         }
 
-        foreach (var node in generator.GetExpandablePositions().Select(p => _objects[p]))
+        foreach (var node in generator.GetEnableablePositions().Select(p => _objects[p]))
         {
-            node.GetComponent<Node>()?.SetExpandable(true);
+            node.GetComponent<Node>()?.SetEnableable(true);
         }
     }
 

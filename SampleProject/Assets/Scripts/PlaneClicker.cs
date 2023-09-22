@@ -16,6 +16,6 @@ public class PlaneClicker : MonoBehaviour, IPointerClickHandler
         var hitPos = eventData.pointerCurrentRaycast.worldPosition;
         var pos = new Vector2Int((int)Math.Round(hitPos.x), (int)Math.Round(hitPos.z));
 
-        _generatorObject.Expand(pos);
+        _generatorObject.EnableNodeExpand(pos);
     }
 }
