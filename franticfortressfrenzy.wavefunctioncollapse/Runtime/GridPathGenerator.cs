@@ -55,7 +55,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         {
             anyClosed = false;
             var created = new HashSet<NodeWithParent<TC>>();
-            var leaves = node.Leaves().Where(l => !l.Data.Expanded).ToList();
+            var leaves = node.Leaves().Where(l => !l.Data.Expanded).ToArray();
             foreach (var leaf in leaves)
             {
                 created.UnionWith(ExpandUnchecked(leaf).GetFirst(out var first));
@@ -83,7 +83,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
             var added = new HashSet<NodeWithParent<TC>>();
 
-            for (int depth = 0; depth < TargetLookAhead + 1; depth++)
+            for (int depth = 0; depth < TargetLookAhead; depth++)
             {
                 var addedAux = ExpandLeavesOnce(_tree.Root, out var anyClosed);
                 added.UnionWith(addedAux);
