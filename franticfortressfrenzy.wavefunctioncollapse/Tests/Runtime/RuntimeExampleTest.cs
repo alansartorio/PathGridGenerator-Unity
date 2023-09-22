@@ -14,6 +14,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         public void SimpleTest()
         {
             var a = new GridPathGenerator<Vector2Int>(1, 1, new Vector2IntNeighborGetter(), Vector2Int.zero);
+            a.Initialize();
             a.Expand(Vector2Int.zero);
 
             var expandAnyLeaf = new Action(() =>

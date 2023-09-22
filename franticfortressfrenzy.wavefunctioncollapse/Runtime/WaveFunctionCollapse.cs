@@ -5,6 +5,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using UnityEditor.Graphs.AnimationBlendTree;
 using UnityEngine;
+using UnityEngine.Events;
 using Random = UnityEngine.Random;
 
 namespace FranticFortressFrenzy.WaveFunctionCollapse
@@ -14,6 +15,12 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         private Tree<TC, NodeData> _tree;
         public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
+
+        public readonly UnityEvent<TC> onNodeAdded = new();
+        public readonly UnityEvent<TC> onNodeRemoved = new();
+        public readonly UnityEvent<TC, PathNode<TC, NodeData>> onNodeChildrenChanged = new();
+        public readonly UnityEvent<TC> onNodeEnabled = new();
+        public readonly UnityEvent<TC> onNodeDisabled = new();
 
         public int MaxRetries { get; private set; }
         public int TargetLookAhead { get; private set; }
@@ -31,6 +38,10 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         {
         }
 
+        public void Initialize()
+        {
+            onNodeAdded.Invoke(Root.Position);
+        }
 
         public void Expand(TC position)
         {
@@ -45,22 +56,33 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
             neighs.RemoveWhere(n => _tree.GetNodeInPosition(n) != null);
 
-            var amount = Random.Range(1, neighs.Count + 1);
-            var neighArray = neighs.ToArray();
-
-            var chosenNeighs = new List<TC>();
-            for (var i = 0; i < amount; i++)
+            if (neighs.Count > 0)
             {
-                var chosen = Random.Range(i, neighArray.Length);
-                (neighArray[i], neighArray[chosen]) = (neighArray[chosen], neighArray[i]);
-                chosenNeighs.Add(neighArray[i]);
+                var amount = Random.Range(1, neighs.Count + 1);
+                var neighArray = neighs.ToArray();
+
+                var chosenNeighs = new List<TC>();
+                for (var i = 0; i < amount; i++)
+                {
+                    var chosen = Random.Range(i, neighArray.Length);
+                    (neighArray[i], neighArray[chosen]) = (neighArray[chosen], neighArray[i]);
+                    chosenNeighs.Add(neighArray[i]);
+                }
+
+                foreach (var chosenNeigh in chosenNeighs)
+                {
+                    var addedNode = node.AddChild(chosenNeigh, new NodeData());
+                    _tree.RegisterNode(addedNode);
+                    onNodeAdded.Invoke(chosenNeigh);
+                }
             }
 
-            foreach (var chosenNeigh in chosenNeighs)
-            {
-                var addedNode = node.AddChild(chosenNeigh, new NodeData());
-                _tree.RegisterNode(addedNode);
-            }
+            node.Data.Expanded = true;
+        }
+
+        public IEnumerable<TC> GetExpandablePositions()
+        {
+            return Root.Leaves().Where(n => !n.Data.Expanded).Select(n => n.Position);
         }
     }
 
