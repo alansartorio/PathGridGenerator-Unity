@@ -5,11 +5,11 @@ using JetBrains.Annotations;
 
 namespace FranticFortressFrenzy.WaveFunctionCollapse
 {
-    public class PathNode<TC, T> : IEnumerable<PathNode<TC, T>>
+    public class PathNode<TC, T>
     {
         public TC Position { get; }
         public List<PathNode<TC, T>> Children { get; }
-        [CanBeNull] public PathNode<TC, T> Parent { get; }
+        [CanBeNull] public PathNode<TC, T> Parent { get; private set; }
         public T Data { get; private set; }
 
         public PathNode(TC position, T data, PathNode<TC, T> parent, List<PathNode<TC, T>> children)
@@ -24,9 +24,11 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         {
         }
 
-        public IEnumerator<PathNode<TC, T>> GetEnumerator()
+        public IEnumerable<PathNode<TC, T>> Descendants()
         {
-            return Enumerable.Repeat(this, 1).Concat(Children.SelectMany(c => c)).GetEnumerator();
+            return Enumerable
+                .Repeat(this, 1)
+                .Concat(Children.SelectMany(c => c.Descendants()));
         }
 
         public PathNode<TC, T> AddChild(TC position, T data)
@@ -36,14 +38,20 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             return node;
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public void RemoveChild(PathNode<TC, T> child)
         {
-            return GetEnumerator();
+            Children.Remove(child);
+            child.Parent = null;
+        }
+
+        public void SetParent(PathNode<TC, T> parent)
+        {
+            Parent = parent;
         }
 
         public IEnumerable<PathNode<TC, T>> Leaves()
         {
-            return this.Where(n => n.Children.Count == 0);
+            return Descendants().Where(n => n.Children.Count == 0);
         }
     }
 }

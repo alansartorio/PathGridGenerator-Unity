@@ -37,7 +37,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             }
 
             var nodePos = new Func<Vector2Int, Vector2Int>(n => (n + Vector2Int.one * 5) * 2);
-            foreach (var node in a.Root)
+            foreach (var node in a.Root.Descendants())
             {
                 var pos = nodePos(node.Position);
                 if (node.Parent == null)

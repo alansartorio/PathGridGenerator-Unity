@@ -6,7 +6,7 @@ using System.Linq;
 using FranticFortressFrenzy.WaveFunctionCollapse;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Random = UnityEngine.Random;
+using Random = System.Random;
 
 public static class EnumerableExtensions
 {
@@ -26,6 +26,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         private Tree<TC, NodeData> _tree;
         public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
+        private Random rng = new Random(135135);
 
         public int MaxRetries { get; private set; }
         public int TargetLookAhead { get; private set; }
@@ -41,22 +42,23 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
         public NodesDelta<TC> Initialize()
         {
+            Root.Data.Enabled = true;
+            var rootChildren = ExpandUnchecked(Root).ToHashSet();
+            rootChildren.Add(new NodeWithParent<TC>(Root, null));
             return new NodesDeltaBuilder<TC>()
-                .WithAddedNodes(
-                    Enumerable.Repeat(new NodeWithParent<TC>(Root, null), 1)
-                )
+                .WithAddedNodes(rootChildren)
+                .WithEnabledNodes(new() { Root })
                 .Build().ApplyDelta(RegenerateDisabledTree());
-            // EnableNode(Root.Position);
         }
 
         private IEnumerable<NodeWithParent<TC>> ExpandLeavesOnce(PathNode<TC, NodeData> node, out bool anyClosed)
         {
             anyClosed = false;
-            var created = Enumerable.Empty<NodeWithParent<TC>>();
-            var leaves = node.Leaves().ToList();
+            var created = new HashSet<NodeWithParent<TC>>();
+            var leaves = node.Leaves().Where(l => !l.Data.Expanded).ToList();
             foreach (var leaf in leaves)
             {
-                created = created.Concat(ExpandUnchecked(node).GetFirst(out var first));
+                created.UnionWith(ExpandUnchecked(leaf).GetFirst(out var first));
                 if (first == null)
                 {
                     anyClosed = true;
@@ -68,7 +70,33 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
         private NodesDelta<TC> RegenerateDisabledTree()
         {
-            return new NodesDeltaBuilder<TC>().Build();
+            var removed = new HashSet<PathNode<TC, NodeData>>();
+
+            foreach (var enableableNode in GetEnableablePositions().Select(p => _tree.GetNodeInPosition(p)!).ToArray())
+            {
+                enableableNode.Data.Expanded = false;
+                foreach (var treeRoot in enableableNode.Children.ToArray())
+                {
+                    removed.UnionWith(_tree.RemoveNode(treeRoot, enableableNode));
+                }
+            }
+
+            var added = new HashSet<NodeWithParent<TC>>();
+
+            for (int depth = 0; depth < TargetLookAhead + 1; depth++)
+            {
+                var addedAux = ExpandLeavesOnce(_tree.Root, out var anyClosed);
+                added.UnionWith(addedAux);
+                if (anyClosed)
+                {
+                    // TODO: retry
+                }
+            }
+
+            return new NodesDeltaBuilder<TC>()
+                .WithRemovedNodes(removed)
+                .WithAddedNodes(added)
+                .Build();
         }
 
         public NodesDelta<TC> EnableNode(TC position)
@@ -80,18 +108,19 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             if (!GetEnableablePositions().Contains(node.Position))
                 return null;
 
-            node.Data.Enabled = true;
 
-            var created = ExpandLeavesOnce(node, out var anyClosed);
+            var created = ExpandLeavesOnce(node, out var anyClosed).ToHashSet();
 
             var delta = new NodesDeltaBuilder<TC>()
                 .WithAddedNodes(created)
-                .WithEnabledNodes(Enumerable.Repeat(node, 1))
+                .WithEnabledNodes(new() { node })
                 .Build();
             if (anyClosed)
             {
                 delta = delta.ApplyDelta(RegenerateDisabledTree());
             }
+
+            node.Data.Enabled = true;
 
             return delta;
         }
@@ -111,13 +140,13 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 return Enumerable.Empty<NodeWithParent<TC>>();
             }
 
-            var amount = Random.Range(1, neighs.Count + 1);
+            var amount = rng.Next(1, neighs.Count + 1);
             var neighArray = neighs.ToArray();
 
             var chosenNeighs = new List<TC>();
             for (var i = 0; i < amount; i++)
             {
-                var chosen = Random.Range(i, neighArray.Length);
+                var chosen = rng.Next(i, neighArray.Length);
                 (neighArray[i], neighArray[chosen]) = (neighArray[chosen], neighArray[i]);
                 chosenNeighs.Add(neighArray[i]);
             }
@@ -133,7 +162,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
         public IEnumerable<TC> GetEnableablePositions()
         {
-            return Root.Leaves()
+            return Root.Descendants()
                 .Where(n => !n.Data.Enabled && (n.Parent?.Data.Enabled ?? true))
                 .Select(n => n.Position);
         }
@@ -153,12 +182,12 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
     public class NodesDelta<TC>
     {
-        public IEnumerable<NodeWithParent<TC>> addedNodes;
-        public IEnumerable<PathNode<TC, NodeData>> removedNodes;
-        public IEnumerable<PathNode<TC, NodeData>> enabledNodes;
+        public HashSet<NodeWithParent<TC>> addedNodes;
+        public HashSet<PathNode<TC, NodeData>> removedNodes;
+        public HashSet<PathNode<TC, NodeData>> enabledNodes;
 
-        public NodesDelta(IEnumerable<NodeWithParent<TC>> addedNodes, IEnumerable<PathNode<TC, NodeData>> removedNodes,
-            IEnumerable<PathNode<TC, NodeData>> enabledNodes)
+        public NodesDelta(HashSet<NodeWithParent<TC>> addedNodes, HashSet<PathNode<TC, NodeData>> removedNodes,
+            HashSet<PathNode<TC, NodeData>> enabledNodes)
         {
             this.addedNodes = addedNodes;
             this.removedNodes = removedNodes;
@@ -167,34 +196,43 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
         public NodesDelta<TC> ApplyDelta(NodesDelta<TC> other)
         {
+            var added = addedNodes.ToHashSet();
+            var addedSet = added.Select(a => a.node).ToHashSet();
             var removed = other.removedNodes.ToHashSet();
+
+            added.RemoveWhere(a => removed.Contains(a.node));
+            removed.RemoveWhere(r => addedSet.Contains(r));
+            removed.UnionWith(removedNodes);
+            added.UnionWith(other.addedNodes);
+            var enabled = enabledNodes.Except(removed).Union(other.enabledNodes).ToHashSet();
+
             return new NodesDelta<TC>(
-                addedNodes.Where(n => !removed.Contains(n.node)).Concat(other.addedNodes),
-                removedNodes.Concat(removed),
-                enabledNodes.Where(n => !removed.Contains(n)).Concat(other.enabledNodes)
+                added,
+                removed,
+                enabled
             );
         }
     }
 
     public class NodesDeltaBuilder<TC>
     {
-        private IEnumerable<NodeWithParent<TC>> _addedNodes = Enumerable.Empty<NodeWithParent<TC>>();
-        private IEnumerable<PathNode<TC, NodeData>> _removedNodes = Enumerable.Empty<PathNode<TC, NodeData>>();
-        private IEnumerable<PathNode<TC, NodeData>> _enabledNodes = Enumerable.Empty<PathNode<TC, NodeData>>();
+        private HashSet<NodeWithParent<TC>> _addedNodes = new HashSet<NodeWithParent<TC>>();
+        private HashSet<PathNode<TC, NodeData>> _removedNodes = new HashSet<PathNode<TC, NodeData>>();
+        private HashSet<PathNode<TC, NodeData>> _enabledNodes = new HashSet<PathNode<TC, NodeData>>();
 
-        public NodesDeltaBuilder<TC> WithAddedNodes(IEnumerable<NodeWithParent<TC>> addedNodes)
+        public NodesDeltaBuilder<TC> WithAddedNodes(HashSet<NodeWithParent<TC>> addedNodes)
         {
             _addedNodes = addedNodes;
             return this;
         }
 
-        public NodesDeltaBuilder<TC> WithRemovedNodes(IEnumerable<PathNode<TC, NodeData>> removedNodes)
+        public NodesDeltaBuilder<TC> WithRemovedNodes(HashSet<PathNode<TC, NodeData>> removedNodes)
         {
             _removedNodes = removedNodes;
             return this;
         }
 
-        public NodesDeltaBuilder<TC> WithEnabledNodes(IEnumerable<PathNode<TC, NodeData>> enabledNodes)
+        public NodesDeltaBuilder<TC> WithEnabledNodes(HashSet<PathNode<TC, NodeData>> enabledNodes)
         {
             _enabledNodes = enabledNodes;
             return this;

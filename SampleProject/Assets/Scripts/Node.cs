@@ -3,17 +3,15 @@ using UnityEngine;
 
 public class Node : MonoBehaviour
 {
-    [SerializeField]
-    private GameObject node;
-    [SerializeField]
-    private GameObject parentEdge;
-    
+    [SerializeField] private GameObject node;
+    [SerializeField] private GameObject parentEdge;
+
     private bool _expandable = false;
     private bool _enabled = false;
 
     private Material _nodeMaterial;
     private Material _parentEdgeMaterial;
-    
+
     private Color _nodeColor;
     private Color _edgeColor;
 
@@ -30,12 +28,14 @@ public class Node : MonoBehaviour
     {
         UpdateColor();
     }
-    
+
     private void UpdateColor()
     {
         var alpha = !_enabled ? 0.2f : 1.0f;
-        _nodeMaterial.color = _expandable ? Color.green : _nodeColor.WithAlphaMultiplied(alpha);
-        _parentEdgeMaterial.color = _edgeColor.WithAlphaMultiplied(alpha);
+        _nodeMaterial.color = _expandable
+            ? Color.green
+            : new Color(_nodeColor.r * alpha, _nodeColor.g * alpha, _nodeColor.b * alpha);
+        _parentEdgeMaterial.color = new Color(_edgeColor.r * alpha, _edgeColor.g * alpha, _edgeColor.b * alpha);
     }
 
     public void EnableNode()

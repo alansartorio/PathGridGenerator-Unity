@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using JetBrains.Annotations;
 
 namespace FranticFortressFrenzy.WaveFunctionCollapse
@@ -23,6 +24,17 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         public void RegisterNode(PathNode<TC, T> node)
         {
             _nodes.Add(node.Position, node);
+        }
+
+        public IEnumerable<PathNode<TC, T>> RemoveNode(PathNode<TC, T> node, PathNode<TC, T> parent)
+        {
+            foreach (var child in node.Descendants())
+            {
+                _nodes.Remove(child.Position);
+                yield return child;
+            }
+            
+            parent.RemoveChild(node);
         }
     }
 }
