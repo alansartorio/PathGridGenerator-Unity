@@ -140,7 +140,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 return Enumerable.Empty<NodeWithParent<TC>>();
             }
 
-            var amount = rng.Next(1, neighs.Count + 1);
+            var amount = neighs.Count - (int)Math.Log(rng.Next(1, 1<<neighs.Count), 2);
             var neighArray = neighs.ToArray();
 
             var chosenNeighs = new List<TC>();
