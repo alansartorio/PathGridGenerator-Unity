@@ -33,10 +33,6 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             _tree = new Tree<TC, NodeData>(rootPosition, new NodeData());
         }
 
-        public void Step()
-        {
-        }
-
         public void Initialize()
         {
             onNodeAdded.Invoke(Root.Position, null);
@@ -50,7 +46,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
             if (node.Data.Expanded)
                 return;
-            
+
             var neighs = new HashSet<TC>(_neighborGetter.GetNeighbors(node.Position));
 
             if (node.Parent != null)
@@ -106,18 +102,5 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 position + Vector2Int.right,
             };
         }
-    }
-
-    public class ConstrainedGenerator
-    {
-        public IEnumerable<Vector2Int> CollapsableCells()
-        {
-            throw new NotImplementedException();
-        }
-
-        // public CollapseCell(Vector2Int cell)
-        // {
-        //     throw new NotImplementedException();
-        // }
     }
 }

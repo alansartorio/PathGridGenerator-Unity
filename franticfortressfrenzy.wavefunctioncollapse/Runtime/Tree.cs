@@ -7,13 +7,12 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
     public class Tree<TC, T>
     {
         public PathNode<TC, T> Root { get; private set; }
-        private Dictionary<TC, PathNode<TC, T>> _nodes;
+        private readonly Dictionary<TC, PathNode<TC, T>> _nodes;
 
         public Tree(TC rootPosition, T rootData)
         {
             Root = new PathNode<TC, T>(rootPosition, rootData, new List<PathNode<TC, T>>());
-            _nodes = new Dictionary<TC, PathNode<TC, T>>();
-            _nodes.Add(Root.Position, Root);
+            _nodes = new Dictionary<TC, PathNode<TC, T>> { { Root.Position, Root } };
         }
         
         [CanBeNull]
