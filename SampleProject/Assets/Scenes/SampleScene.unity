@@ -424,6 +424,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b22db4b1befbb70eacc9806f10ca14c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rootNodePrefab: {fileID: 3028073592882087894, guid: fdfee7788be3555ac95d05ebf020f0f7,
+    type: 3}
+  nodePrefab: {fileID: 1675306747725732547, guid: 319ea4b975ba19888b613717d6068737,
+    type: 3}
 --- !u!4 &591929318
 Transform:
   m_ObjectHideFlags: 0
@@ -630,7 +634,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: a13ff5e865454af32bc6d3cc042b5704, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

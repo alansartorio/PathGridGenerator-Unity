@@ -16,9 +16,8 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
 
-        public readonly UnityEvent<TC> onNodeAdded = new();
+        public readonly UnityEvent<TC, PathNode<TC, NodeData>> onNodeAdded = new();
         public readonly UnityEvent<TC> onNodeRemoved = new();
-        public readonly UnityEvent<TC, PathNode<TC, NodeData>> onNodeChildrenChanged = new();
         public readonly UnityEvent<TC> onNodeEnabled = new();
         public readonly UnityEvent<TC> onNodeDisabled = new();
 
@@ -40,7 +39,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
         public void Initialize()
         {
-            onNodeAdded.Invoke(Root.Position);
+            onNodeAdded.Invoke(Root.Position, null);
         }
 
         public void Expand(TC position)
@@ -49,6 +48,9 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             if (node == null)
                 throw new ArgumentException("Position does not exist on path tree");
 
+            if (node.Data.Expanded)
+                return;
+            
             var neighs = new HashSet<TC>(_neighborGetter.GetNeighbors(node.Position));
 
             if (node.Parent != null)
@@ -73,7 +75,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 {
                     var addedNode = node.AddChild(chosenNeigh, new NodeData());
                     _tree.RegisterNode(addedNode);
-                    onNodeAdded.Invoke(chosenNeigh);
+                    onNodeAdded.Invoke(chosenNeigh, node);
                 }
             }
 

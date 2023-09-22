@@ -10,6 +10,8 @@ public class Generator : MonoBehaviour
 {
     public GridPathGenerator<Vector2Int> generator;
     private Dictionary<Vector2Int, GameObject> _objects = new();
+    [SerializeField] private GameObject rootNodePrefab;
+    [SerializeField] private GameObject nodePrefab;
 
     void Awake()
     {
@@ -25,7 +27,6 @@ public class Generator : MonoBehaviour
     {
         generator.onNodeAdded.AddListener(OnNodeAdded);
         generator.onNodeRemoved.AddListener(OnNodeRemoved);
-        generator.onNodeChildrenChanged.AddListener(OnNodeChildrenChanged);
         generator.onNodeEnabled.AddListener(OnNodeEnabled);
         generator.onNodeDisabled.AddListener(OnNodeDisabled);
     }
@@ -34,7 +35,6 @@ public class Generator : MonoBehaviour
     {
         generator.onNodeAdded.RemoveListener(OnNodeAdded);
         generator.onNodeRemoved.RemoveListener(OnNodeRemoved);
-        generator.onNodeChildrenChanged.RemoveListener(OnNodeChildrenChanged);
         generator.onNodeEnabled.RemoveListener(OnNodeEnabled);
         generator.onNodeDisabled.RemoveListener(OnNodeDisabled);
     }
@@ -59,11 +59,25 @@ public class Generator : MonoBehaviour
         Destroy(_objects[pos]);
     }
 
-    private void OnNodeAdded(Vector2Int pos)
+    private void OnNodeAdded(Vector2Int pos, PathNode<Vector2Int, NodeData> parent)
     {
-        var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        cube.transform.SetParent(transform);
-        cube.transform.localPosition = new Vector3(pos.x, 0, pos.y);
-        _objects.Add(pos, cube);
+        var prefab = parent == null ? rootNodePrefab : nodePrefab;
+        var node = Instantiate(prefab, transform, true);
+        node.transform.localPosition = new Vector3(pos.x, 0, pos.y);
+        if (parent != null)
+        {
+            var delta = pos - parent.Position;
+            var angle = (delta.x, delta.y) switch
+            {
+                (1, 0) => 0,
+                (0, -1) => 1,
+                (-1, 0) => 2,
+                (0, 1) => 3,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            node.transform.localRotation = Quaternion.Euler(0, angle * 90f, 0);
+        }
+
+        _objects.Add(pos, node);
     }
 }
