@@ -13,7 +13,7 @@ public class Generator : MonoBehaviour
 
     void Awake()
     {
-        generator = new GridPathGenerator<Vector2Int>(5, 1, new Vector2IntNeighborGetter(), Vector2Int.zero);
+        generator = new GridPathGenerator<Vector2Int>(5, 5, new Vector2IntNeighborGetter(), Vector2Int.zero);
     }
 
     private void Start()

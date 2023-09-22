@@ -68,7 +68,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             return created;
         }
 
-        private NodesDelta<TC> RegenerateDisabledTree()
+        private HashSet<PathNode<TC, NodeData>> CutDisabledTree()
         {
             var removed = new HashSet<PathNode<TC, NodeData>>();
 
@@ -81,17 +81,37 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 }
             }
 
-            var added = new HashSet<NodeWithParent<TC>>();
+            return removed;
+        }
 
-            for (int depth = 0; depth < TargetLookAhead; depth++)
+        private NodesDelta<TC> RegenerateDisabledTree()
+        {
+            var removed = CutDisabledTree();
+
+            var added = new HashSet<NodeWithParent<TC>>();
+            bool lastTry, anyClosed;
+            int tryNumber = 0;
+            do
             {
-                var addedAux = ExpandLeavesOnce(_tree.Root, out var anyClosed);
-                added.UnionWith(addedAux);
-                if (anyClosed)
+                lastTry = tryNumber == MaxRetries - 1;
+                CutDisabledTree();
+
+                added.Clear();
+                anyClosed = false;
+
+                for (int depth = 0; depth < TargetLookAhead; depth++)
                 {
-                    // TODO: retry
+                    var addedAux = ExpandLeavesOnce(_tree.Root, out var anyClosedAux);
+                    added.UnionWith(addedAux);
+                    if (anyClosedAux && !lastTry)
+                    {
+                        anyClosed = true;
+                        break;
+                    }
                 }
-            }
+
+                tryNumber++;
+            } while (anyClosed && !lastTry);
 
             return new NodesDeltaBuilder<TC>()
                 .WithRemovedNodes(removed)
@@ -141,7 +161,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             }
 
             // This makes choosing 1 neighbor twice as likely than choosing 2 neighbors, same for 2 and 3
-            var amount = neighs.Count - (int)Math.Log(rng.Next(1, 1<<neighs.Count), 2);
+            var amount = neighs.Count - (int)Math.Log(rng.Next(1, 1 << neighs.Count), 2);
             var neighArray = neighs.ToArray();
 
             var chosenNeighs = new List<TC>();
