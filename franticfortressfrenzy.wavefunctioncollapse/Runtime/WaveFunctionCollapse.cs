@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
+using UnityEditor.Graphs.AnimationBlendTree;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -10,37 +11,30 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 {
     public class GridPathGenerator<TC> where TC : IEquatable<TC>
     {
-        public PathNode<TC> Root { get; }
-        public HashSet<TC> occupied = new();
+        private Tree<TC, NodeData> _tree;
+        public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
-        private Dictionary<TC, PathNode<TC>> _nodes;
 
-        public GridPathGenerator(INeighborGetter<TC> neighborGetter, TC rootPosition)
+        public int MaxRetries { get; private set; }
+        public int TargetLookAhead { get; private set; }
+
+        public GridPathGenerator(int targetLookAhead, int maxRetries, INeighborGetter<TC> neighborGetter,
+            TC rootPosition)
         {
             _neighborGetter = neighborGetter;
-            Root = new PathNode<TC>(rootPosition, new List<PathNode<TC>>());
-            _nodes = new Dictionary<TC, PathNode<TC>>();
-            _nodes.Add(Root.Position, Root);
+            TargetLookAhead = targetLookAhead;
+            MaxRetries = maxRetries;
+            _tree = new Tree<TC, NodeData>(rootPosition, new NodeData());
         }
 
         public void Step()
         {
         }
 
-        [CanBeNull]
-        public PathNode<TC> GetNodeInPosition(TC position)
-        {
-            return _nodes[position];
-        }
-
-        private void RegisterNode(PathNode<TC> node)
-        {
-            _nodes.Add(node.Position, node);
-        }
 
         public void Expand(TC position)
         {
-            var node = GetNodeInPosition(position);
+            var node = _tree.GetNodeInPosition(position);
             if (node == null)
                 throw new ArgumentException("Position does not exist on path tree");
 
@@ -49,7 +43,7 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             if (node.Parent != null)
                 neighs.Remove(node.Parent.Position);
 
-            neighs.RemoveWhere(n => _nodes.ContainsKey(n));
+            neighs.RemoveWhere(n => _tree.GetNodeInPosition(n) != null);
 
             var amount = Random.Range(1, neighs.Count + 1);
             var neighArray = neighs.ToArray();
@@ -64,51 +58,12 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
 
             foreach (var chosenNeigh in chosenNeighs)
             {
-                var addedNode = node.AddChild(chosenNeigh);
-                RegisterNode(addedNode);
+                var addedNode = node.AddChild(chosenNeigh, new NodeData());
+                _tree.RegisterNode(addedNode);
             }
         }
     }
 
-    public class PathNode<TC> : IEnumerable<PathNode<TC>>
-    {
-        public TC Position { get; }
-        public List<PathNode<TC>> Children { get; }
-        [CanBeNull] public PathNode<TC> Parent { get; }
-
-        public PathNode(TC position, PathNode<TC> parent, List<PathNode<TC>> children)
-        {
-            Position = position;
-            Children = children;
-            Parent = parent;
-        }
-
-        public PathNode(TC position, List<PathNode<TC>> children) : this(position, null, children)
-        {
-        }
-
-        public IEnumerator<PathNode<TC>> GetEnumerator()
-        {
-            return Enumerable.Repeat(this, 1).Concat(Children.SelectMany(c => c)).GetEnumerator();
-        }
-
-        public PathNode<TC> AddChild(TC position)
-        {
-            var node = new PathNode<TC>(position, this, new List<PathNode<TC>>());
-            Children.Add(node);
-            return node;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        public IEnumerable<PathNode<TC>> Leaves()
-        {
-            return this.Where(n => n.Children.Count == 0);
-        }
-    }
 
     public interface INeighborGetter<TC>
     {
