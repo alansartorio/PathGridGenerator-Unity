@@ -1,44 +1,42 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using FranticFortressFrenzy.WaveFunctionCollapse;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
-public class NewBehaviourScript : MonoBehaviour
+public class Generator : MonoBehaviour
 {
-    private GridPathGenerator<Vector2Int> _generator;
+    public GridPathGenerator<Vector2Int> generator;
     private Dictionary<Vector2Int, GameObject> _objects = new();
 
     void Awake()
     {
-        _generator = new GridPathGenerator<Vector2Int>(1, 1, new Vector2IntNeighborGetter(), Vector2Int.zero);
+        generator = new GridPathGenerator<Vector2Int>(1, 1, new Vector2IntNeighborGetter(), Vector2Int.zero);
     }
 
     private void Start()
     {
-        _generator.Initialize();
+        generator.Initialize();
     }
 
     private void OnEnable()
     {
-        _generator.onNodeAdded.AddListener(OnNodeAdded);
-        _generator.onNodeRemoved.AddListener(OnNodeRemoved);
-        _generator.onNodeChildrenChanged.AddListener(OnNodeChildrenChanged);
-        _generator.onNodeEnabled.AddListener(OnNodeEnabled);
-        _generator.onNodeDisabled.AddListener(OnNodeDisabled);
+        generator.onNodeAdded.AddListener(OnNodeAdded);
+        generator.onNodeRemoved.AddListener(OnNodeRemoved);
+        generator.onNodeChildrenChanged.AddListener(OnNodeChildrenChanged);
+        generator.onNodeEnabled.AddListener(OnNodeEnabled);
+        generator.onNodeDisabled.AddListener(OnNodeDisabled);
     }
 
     private void OnDisable()
     {
-        _generator.onNodeAdded.RemoveListener(OnNodeAdded);
-        _generator.onNodeRemoved.RemoveListener(OnNodeRemoved);
-        _generator.onNodeChildrenChanged.RemoveListener(OnNodeChildrenChanged);
-        _generator.onNodeEnabled.RemoveListener(OnNodeEnabled);
-        _generator.onNodeDisabled.RemoveListener(OnNodeDisabled);
+        generator.onNodeAdded.RemoveListener(OnNodeAdded);
+        generator.onNodeRemoved.RemoveListener(OnNodeRemoved);
+        generator.onNodeChildrenChanged.RemoveListener(OnNodeChildrenChanged);
+        generator.onNodeEnabled.RemoveListener(OnNodeEnabled);
+        generator.onNodeDisabled.RemoveListener(OnNodeDisabled);
     }
 
     private void OnNodeDisabled(Vector2Int arg0)
@@ -67,14 +65,5 @@ public class NewBehaviourScript : MonoBehaviour
         cube.transform.SetParent(transform);
         cube.transform.localPosition = new Vector3(pos.x, 0, pos.y);
         _objects.Add(pos, cube);
-    }
-
-    void Update()
-    {
-        if (Input.GetMouseButtonDown((int)MouseButton.LeftMouse))
-        {
-            var positions = _generator.GetExpandablePositions().ToList();
-            _generator.Expand(positions[Random.Range(0, positions.Count)]);
-        }
     }
 }
