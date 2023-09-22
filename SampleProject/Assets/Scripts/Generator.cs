@@ -20,46 +20,43 @@ public class Generator : MonoBehaviour
 
     private void Start()
     {
-        generator.Initialize();
+        var root = generator.Initialize();
+        AddNode(root.Position, null);
     }
 
-    private void OnEnable()
+    public void Expand(Vector2Int pos)
     {
-        generator.onNodeAdded.AddListener(OnNodeAdded);
-        generator.onNodeRemoved.AddListener(OnNodeRemoved);
-        generator.onNodeEnabled.AddListener(OnNodeEnabled);
-        generator.onNodeDisabled.AddListener(OnNodeDisabled);
+        if (!generator.GetExpandablePositions().Contains(pos))
+            return;
+        var delta = generator.Expand(pos);
+        foreach (var node in delta.removedNodes)
+        {
+            RemoveNode(node.Position);
+        }
+
+        foreach (var added in delta.addedNodes)
+        {
+            AddNode(added.node.Position, added.parent);
+        }
+
+        foreach (var enabled in delta.enabledNodes)
+        {
+            EnableNode(enabled.Position);
+        }
     }
 
-    private void OnDisable()
+    private void EnableNode(Vector2Int pos)
     {
-        generator.onNodeAdded.RemoveListener(OnNodeAdded);
-        generator.onNodeRemoved.RemoveListener(OnNodeRemoved);
-        generator.onNodeEnabled.RemoveListener(OnNodeEnabled);
-        generator.onNodeDisabled.RemoveListener(OnNodeDisabled);
+        // throw new NotImplementedException();
     }
 
-    private void OnNodeDisabled(Vector2Int arg0)
-    {
-        throw new NotImplementedException();
-    }
-
-    private void OnNodeEnabled(Vector2Int arg0)
-    {
-        throw new NotImplementedException();
-    }
-
-    private void OnNodeChildrenChanged(Vector2Int arg0, PathNode<Vector2Int, NodeData> arg1)
-    {
-        throw new NotImplementedException();
-    }
-
-    private void OnNodeRemoved(Vector2Int pos)
+    private void RemoveNode(Vector2Int pos)
     {
         Destroy(_objects[pos]);
+        _objects.Remove(pos);
     }
 
-    private void OnNodeAdded(Vector2Int pos, PathNode<Vector2Int, NodeData> parent)
+    private void AddNode(Vector2Int pos, PathNode<Vector2Int, NodeData> parent)
     {
         var prefab = parent == null ? rootNodePrefab : nodePrefab;
         var node = Instantiate(prefab, transform, true);

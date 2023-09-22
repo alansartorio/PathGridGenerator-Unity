@@ -16,11 +16,6 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         public PathNode<TC, NodeData> Root => _tree.Root;
         private INeighborGetter<TC> _neighborGetter;
 
-        public readonly UnityEvent<TC, PathNode<TC, NodeData>> onNodeAdded = new();
-        public readonly UnityEvent<TC> onNodeRemoved = new();
-        public readonly UnityEvent<TC> onNodeEnabled = new();
-        public readonly UnityEvent<TC> onNodeDisabled = new();
-
         public int MaxRetries { get; private set; }
         public int TargetLookAhead { get; private set; }
 
@@ -33,19 +28,19 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
             _tree = new Tree<TC, NodeData>(rootPosition, new NodeData());
         }
 
-        public void Initialize()
+        public PathNode<TC, NodeData> Initialize()
         {
-            onNodeAdded.Invoke(Root.Position, null);
+            return Root;
         }
 
-        public void Expand(TC position)
+        public NodesDelta<TC> Expand(TC position)
         {
             var node = _tree.GetNodeInPosition(position);
             if (node == null)
                 throw new ArgumentException("Position does not exist on path tree");
 
             if (node.Data.Expanded)
-                return;
+                return null;
 
             var neighs = new HashSet<TC>(_neighborGetter.GetNeighbors(node.Position));
 
@@ -53,29 +48,39 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
                 neighs.Remove(node.Parent.Position);
 
             neighs.RemoveWhere(n => _tree.GetNodeInPosition(n) != null);
+            node.Data.Expanded = true;
 
-            if (neighs.Count > 0)
+            if (neighs.Count == 0)
             {
-                var amount = Random.Range(1, neighs.Count + 1);
-                var neighArray = neighs.ToArray();
-
-                var chosenNeighs = new List<TC>();
-                for (var i = 0; i < amount; i++)
-                {
-                    var chosen = Random.Range(i, neighArray.Length);
-                    (neighArray[i], neighArray[chosen]) = (neighArray[chosen], neighArray[i]);
-                    chosenNeighs.Add(neighArray[i]);
-                }
-
-                foreach (var chosenNeigh in chosenNeighs)
-                {
-                    var addedNode = node.AddChild(chosenNeigh, new NodeData());
-                    _tree.RegisterNode(addedNode);
-                    onNodeAdded.Invoke(chosenNeigh, node);
-                }
+                return new NodesDelta<TC>(
+                    Enumerable.Empty<NodeWithParent<TC>>(),
+                    Enumerable.Empty<PathNode<TC, NodeData>>(),
+                    Enumerable.Repeat(node, 1)
+                );
             }
 
-            node.Data.Expanded = true;
+            var amount = Random.Range(1, neighs.Count + 1);
+            var neighArray = neighs.ToArray();
+
+            var chosenNeighs = new List<TC>();
+            for (var i = 0; i < amount; i++)
+            {
+                var chosen = Random.Range(i, neighArray.Length);
+                (neighArray[i], neighArray[chosen]) = (neighArray[chosen], neighArray[i]);
+                chosenNeighs.Add(neighArray[i]);
+            }
+
+            foreach (var chosenNeigh in chosenNeighs)
+            {
+                var addedNode = node.AddChild(chosenNeigh, new NodeData());
+                _tree.RegisterNode(addedNode);
+            }
+
+            return new NodesDelta<TC>(
+                chosenNeighs.Select(pos => new NodeWithParent<TC>(_tree.GetNodeInPosition(pos), node)),
+                Enumerable.Empty<PathNode<TC, NodeData>>(),
+                Enumerable.Repeat(node, 1)
+            );
         }
 
         public IEnumerable<TC> GetExpandablePositions()
@@ -84,6 +89,32 @@ namespace FranticFortressFrenzy.WaveFunctionCollapse
         }
     }
 
+    public class NodeWithParent<TC>
+    {
+        public PathNode<TC, NodeData> node;
+        public PathNode<TC, NodeData> parent;
+
+        public NodeWithParent(PathNode<TC, NodeData> node, PathNode<TC, NodeData> parent)
+        {
+            this.node = node;
+            this.parent = parent;
+        }
+    }
+
+    public class NodesDelta<TC>
+    {
+        public IEnumerable<NodeWithParent<TC>> addedNodes;
+        public IEnumerable<PathNode<TC, NodeData>> removedNodes;
+        public IEnumerable<PathNode<TC, NodeData>> enabledNodes;
+
+        public NodesDelta(IEnumerable<NodeWithParent<TC>> addedNodes, IEnumerable<PathNode<TC, NodeData>> removedNodes,
+            IEnumerable<PathNode<TC, NodeData>> enabledNodes)
+        {
+            this.addedNodes = addedNodes;
+            this.removedNodes = removedNodes;
+            this.enabledNodes = enabledNodes;
+        }
+    }
 
     public interface INeighborGetter<TC>
     {
