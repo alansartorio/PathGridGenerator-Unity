@@ -18,8 +18,8 @@ namespace AlanSartorio.GridPathGenerator
 
             var expandAnyLeaf = new Action(() =>
             {
-                var leaves = a.Root.Leaves().ToArray();
-                a.EnableNode(leaves[Random.Range(0, leaves.Length)].Position);
+                var leaves = a.GetEnableablePositions().ToArray();
+                a.EnableNode(leaves[Random.Range(0, leaves.Length)]);
             });
 
             for (int i = 0; i < 10; i++)
@@ -42,14 +42,14 @@ namespace AlanSartorio.GridPathGenerator
                 var pos = nodePos(node.Position);
                 if (node.Parent == null)
                 {
-                    map[pos.y, pos.x] = 'o';
+                    map[pos.y, pos.x] = '0';
                     continue;
                 }
 
-                map[pos.y, pos.x] = '#';
+                map[pos.y, pos.x] = node.Data.Enabled ? '#' : '.';
                 var parentPos = nodePos(node.Parent.Position);
                 var connection = (pos + parentPos) / 2;
-                map[connection.y, connection.x] = '*';
+                map[connection.y, connection.x] = node.Data.Enabled ? '*' : '.';
             }
 
             StringBuilder mapString = new();
@@ -65,6 +65,11 @@ namespace AlanSartorio.GridPathGenerator
             }
 
             Debug.Log(mapString);
+            
+            foreach (var path in a.GetPathsFromLeaves())
+            {
+                Debug.Log(string.Join(", ", path.Nodes));
+            }
         }
     }
 }

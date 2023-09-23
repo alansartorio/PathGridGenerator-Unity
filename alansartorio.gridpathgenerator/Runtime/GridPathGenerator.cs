@@ -187,6 +187,32 @@ namespace AlanSartorio.GridPathGenerator
                 .Where(n => !n.Data.Enabled && (n.Parent?.Data.Enabled ?? true))
                 .Select(n => n.Position);
         }
+
+        public IEnumerable<Path<TC>> GetPathsFromLeaves()
+        {
+            return GetEnableablePositions().Select(l =>
+            {
+                List<TC> nodes = new();
+                var node = _tree.GetNodeInPosition(l);
+                while (node != null)
+                {
+                    nodes.Add(node.Position);
+                    node = node.Parent;
+                }
+
+                return new Path<TC>(nodes);
+            });
+        }
+    }
+
+    public class Path<TC>
+    {
+        public List<TC> Nodes { get; }
+
+        public Path(List<TC> nodes)
+        {
+            Nodes = nodes;
+        }
     }
 
     public class NodeWithParent<TC>
