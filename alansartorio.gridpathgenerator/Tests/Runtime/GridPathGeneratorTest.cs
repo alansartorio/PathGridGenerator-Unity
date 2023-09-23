@@ -2,7 +2,7 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace FranticFortressFrenzy.WaveFunctionCollapse
+namespace AlanSartorio.GridPathGenerator
 {
     class GridPathGeneratorTest
     {

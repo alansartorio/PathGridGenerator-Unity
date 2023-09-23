@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FranticFortressFrenzy.WaveFunctionCollapse;
+using AlanSartorio.GridPathGenerator;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Random = System.Random;
@@ -19,7 +19,7 @@ public static class EnumerableExtensions
     }
 }
 
-namespace FranticFortressFrenzy.WaveFunctionCollapse
+namespace AlanSartorio.GridPathGenerator
 {
     public class GridPathGenerator<TC> where TC : IEquatable<TC>
     {

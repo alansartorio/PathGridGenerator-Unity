@@ -1,4 +1,4 @@
-namespace FranticFortressFrenzy.WaveFunctionCollapse
+namespace AlanSartorio.GridPathGenerator
 {
     public class NodeData
     {

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using JetBrains.Annotations;
 
-namespace FranticFortressFrenzy.WaveFunctionCollapse
+namespace AlanSartorio.GridPathGenerator
 {
     public class Tree<TC, T>
     {

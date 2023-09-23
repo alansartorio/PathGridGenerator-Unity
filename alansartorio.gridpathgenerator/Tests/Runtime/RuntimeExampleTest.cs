@@ -5,7 +5,7 @@ using NUnit.Framework;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace FranticFortressFrenzy.WaveFunctionCollapse
+namespace AlanSartorio.GridPathGenerator
 {
     class Tests
     {

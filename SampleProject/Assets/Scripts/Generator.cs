@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FranticFortressFrenzy.WaveFunctionCollapse;
+using AlanSartorio.GridPathGenerator;
 using UnityEngine;
 
 public class Generator : MonoBehaviour
